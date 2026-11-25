@@ -117,7 +117,11 @@ const CATEG = {
 };
 async function openFinance() {
   const limpa = (v) => (v || '').replace(/[\s​-‍﻿"']/g, '');
-  const id = limpa(env.PLUGGY_CLIENT_ID), sec = limpa(env.PLUGGY_CLIENT_SECRET);
+  const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  // Client ID: secret PLUGGY_CLIENT_ID (se for um UUID válido) ou "pluggy_client_id" da carteira
+  let id = limpa(env.PLUGGY_CLIENT_ID);
+  if (!UUID.test(id)) id = limpa(cart.pluggy_client_id);
+  const sec = limpa(env.PLUGGY_CLIENT_SECRET);
   // IDs das conexões: secret PLUGGY_ITEMS ou, se não existir, "pluggy_items" da carteira (criptografada)
   const items = (env.PLUGGY_ITEMS || (cart.pluggy_items || []).join(',')).split(/[\s,;]+/).filter(Boolean);
   if (!id || !sec || !items.length) return null;
