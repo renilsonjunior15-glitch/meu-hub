@@ -115,7 +115,8 @@ const CATEG = {
 };
 async function openFinance() {
   const id = env.PLUGGY_CLIENT_ID, sec = env.PLUGGY_CLIENT_SECRET;
-  const items = (env.PLUGGY_ITEMS || '').split(/[\s,;]+/).filter(Boolean);
+  // IDs das conexões: secret PLUGGY_ITEMS ou, se não existir, "pluggy_items" da carteira (criptografada)
+  const items = (env.PLUGGY_ITEMS || (cart.pluggy_items || []).join(',')).split(/[\s,;]+/).filter(Boolean);
   if (!id || !sec || !items.length) return null;
   const BASE = 'https://api.pluggy.ai';
   const auth = await getJSON(BASE + '/auth', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ clientId: id, clientSecret: sec }) }, 2);
