@@ -48,7 +48,9 @@ async function getJSON(url, opts = {}, tentativas = 3) {
     try {
       const r = await fetch(url, { ...opts, headers: { 'user-agent': 'Mozilla/5.0 (meu-hub)', accept: 'application/json', ...(opts.headers || {}) } });
       if (r.ok) return await r.json();
-      ultimo = new Error(`HTTP ${r.status} em ${url.split('?')[0]}`);
+      let det = '';
+      try { det = (await r.text()).slice(0, 200).replace(/"?(apiKey|clientSecret)"?\s*:\s*"[^"]*"/gi, '$1:***'); } catch {}
+      ultimo = new Error(`HTTP ${r.status} em ${url.split('?')[0]}` + (det ? ' — ' + det : ''));
       if (r.status < 500 && r.status !== 429) break;
     } catch (e) { ultimo = e; }
     await sleep(1500 * (i + 1));
@@ -114,12 +116,18 @@ const CATEG = {
   'Travel': 'Viagem', 'Gym and fitness centers': 'Academia', 'Pets': 'Pets', 'Donations': 'Doações', 'Services': 'Serviços', 'Withdrawal': 'Saque', 'Bets': 'Apostas'
 };
 async function openFinance() {
-  const id = env.PLUGGY_CLIENT_ID, sec = env.PLUGGY_CLIENT_SECRET;
+  const limpa = (v) => (v || '').replace(/[\s​-‍﻿"']/g, '');
+  const id = limpa(env.PLUGGY_CLIENT_ID), sec = limpa(env.PLUGGY_CLIENT_SECRET);
   // IDs das conexões: secret PLUGGY_ITEMS ou, se não existir, "pluggy_items" da carteira (criptografada)
   const items = (env.PLUGGY_ITEMS || (cart.pluggy_items || []).join(',')).split(/[\s,;]+/).filter(Boolean);
   if (!id || !sec || !items.length) return null;
   const BASE = 'https://api.pluggy.ai';
-  const auth = await getJSON(BASE + '/auth', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ clientId: id, clientSecret: sec }) }, 2);
+  let auth;
+  try {
+    auth = await getJSON(BASE + '/auth', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ clientId: id, clientSecret: sec }) }, 2);
+  } catch (e) {
+    throw new Error(e.message + ` [clientId: ${id.length} caracteres, secret: ${sec.length} caracteres, começa com "${sec.slice(0, 10)}"]`);
+  }
   const H = { headers: { 'X-API-KEY': auth.apiKey } };
   const out = { bancos: [], contas: [], transacoes: [], faturas: [], investimentos: [] };
   const de = addDias(HOJE, -90);
