@@ -16,10 +16,14 @@ const addDias = (s, n) => { const d = new Date(s + 'T12:00:00Z'); d.setUTCDate(d
 const r2 = (x) => x == null || !isFinite(x) ? null : Math.round(x * 100) / 100;
 const r4 = (x) => x == null || !isFinite(x) ? null : Math.round(x * 10000) / 10000;
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+// Erros viram anotações do GitHub (aparecem no resumo da execução, sem precisar abrir o log)
+const falha = (msg) => { console.log('::error::' + String(msg).replace(/\r?\n/g, '%0A')); process.exit(1); };
+process.on('unhandledRejection', (e) => falha('Erro: ' + (e && e.stack || e)));
+process.on('uncaughtException', (e) => falha('Erro: ' + (e && e.stack || e)));
 
 /* ---------------- cripto (mesmo formato do hub: sal|iv|hmac|aes-cbc) ---------------- */
 const KEY = Buffer.from(env.HUB_KEY || '', 'base64');
-if (KEY.length !== 64) { console.error('HUB_KEY ausente ou inválida (precisa ter 64 bytes em base64).'); process.exit(1); }
+if (KEY.length !== 64) falha('HUB_KEY ausente ou inválida (precisa ter 64 bytes em base64).');
 async function decrypt(u8) {
   const iv = u8.subarray(16, 32), mac = u8.subarray(32, 64), ct = u8.subarray(64);
   const mk = await subtle.importKey('raw', KEY.subarray(32), { name: 'HMAC', hash: 'SHA-256' }, false, ['verify']);
@@ -188,7 +192,7 @@ let ipca = []; try { ipca = await sgs(433, addDias(desde, -40)); } catch (e) { a
 let ipca12 = null; try { const x = await sgs(13522, addDias(HOJE, -70)); ipca12 = x.length ? x[x.length - 1] : null; } catch (e) { avisos.push('IPCA 12 meses: ' + e.message); }
 let selic = null; try { const x = await sgs(432, addDias(HOJE, -10)); selic = x.length ? x[x.length - 1][1] : null; } catch {}
 
-if (!Object.keys(hist).length || !ibov) { console.error('Sem cotações; dados antigos mantidos.', avisos); process.exit(1); }
+if (!Object.keys(hist).length || !ibov) falha('Sem cotações; dados antigos mantidos. ' + avisos.join(' | '));
 
 const dataRef = ibov.serie[ibov.serie.length - 1][0]; // último pregão
 const bench = (tipo, valor, de, ate) => {
@@ -283,4 +287,4 @@ const dados = {
 
 await writeFile('apps/dados.bin', await encrypt(JSON.stringify(dados), salt));
 console.log(`OK ${dados.gerado_em} · ref ${dataRef} · ${ativos.length} ativos · carteira ${tot.carteira} (${pct(tot.carteira)}%) · CDI ${pct(tot.cdi)}% · IBOV ${pct(tot.ibov)}% · IPCA ${pct(tot.ipca)}% · Open Finance: ${of ? of.contas.length + ' contas, ' + of.transacoes.length + ' lançamentos' : 'não configurado'}`);
-if (avisos.length) console.log('Avisos:\n- ' + avisos.join('\n- '));
+if (avisos.length) console.log('::warning::' + avisos.join(' | '));
