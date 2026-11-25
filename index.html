@@ -264,6 +264,7 @@ button{font:inherit;color:inherit;cursor:pointer}
         if (!html) throw new Error('chave');
         cache[file] = html;
       }
+      if (file === 'financas') html = await comDadosVivos(html);
       if ($('frame') !== fr) return; // trocou de app enquanto abria
       fr.onload = function () { $('vload').hidden = true; fixLinks(fr); };
       fr.srcdoc = html;
@@ -271,6 +272,16 @@ button{font:inherit;color:inherit;cursor:pointer}
       fr.dataset.file = '';
       $('vload').textContent = e.message === 'chave' ? 'Este app foi gerado com outro PIN. Bloqueie e entre de novo.' : 'Sem conexão e sem cópia salva deste app. Tente com internet.';
     }
+  }
+  // Dados do robô diário: busca a versão mais nova a cada abertura (sem internet, usa a última salva)
+  async function comDadosVivos(html) {
+    try {
+      var txt = await decrypt(bits, await fetchBin('dados'));
+      if (!txt) return html;
+      JSON.parse(txt);
+      var safe = txt.replace(/</g, '\\u003c').split(String.fromCharCode(8232)).join('\\u2028').split(String.fromCharCode(8233)).join('\\u2029');
+      return html.replace('/*DADOS_VIVOS*/null', function () { return safe; });
+    } catch (e) { return html; }
   }
   // Dentro do app, "#secao" rola até a seção (sem sair do app) e links externos abrem em outra aba
   function fixLinks(fr) {

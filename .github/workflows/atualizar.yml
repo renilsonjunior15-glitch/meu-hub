@@ -1,0 +1,39 @@
+name: Atualizar dados do hub
+
+on:
+  schedule:
+    # Todo dia às 08:30 de Brasília (11:30 UTC), antes da abertura da B3 (10:00).
+    - cron: '30 11 * * *'
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+concurrency:
+  group: atualizar-dados
+  cancel-in-progress: false
+
+jobs:
+  atualizar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Buscar cotações, índices e Open Finance
+        run: node robo/atualizar.mjs
+        env:
+          HUB_KEY: ${{ secrets.HUB_KEY }}
+          PLUGGY_CLIENT_ID: ${{ secrets.PLUGGY_CLIENT_ID }}
+          PLUGGY_CLIENT_SECRET: ${{ secrets.PLUGGY_CLIENT_SECRET }}
+          PLUGGY_ITEMS: ${{ secrets.PLUGGY_ITEMS }}
+      - name: Publicar
+        run: |
+          git config user.name "robo-do-hub"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add apps/dados.bin
+          git diff --cached --quiet && exit 0
+          git commit -m "Dados de $(TZ=America/Sao_Paulo date +%d/%m/%Y)"
+          git push
