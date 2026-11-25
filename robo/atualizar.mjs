@@ -23,7 +23,7 @@ process.on('uncaughtException', (e) => falha('Erro: ' + (e && e.stack || e)));
 
 /* ---------------- cripto (mesmo formato do hub: sal|iv|hmac|aes-cbc) ---------------- */
 const KEY = Buffer.from(env.HUB_KEY || '', 'base64');
-if (KEY.length !== 64) falha('HUB_KEY ausente ou inválida (precisa ter 64 bytes em base64).');
+if (KEY.length !== 64) falha('HUB_KEY ausente ou inválida (precisa ter 64 bytes em base64). Recebido: ' + (env.HUB_KEY ? env.HUB_KEY.trim().length + ' caracteres = ' + KEY.length + ' bytes' : 'nada (o secret HUB_KEY não existe neste repositório)'));
 async function decrypt(u8) {
   const iv = u8.subarray(16, 32), mac = u8.subarray(32, 64), ct = u8.subarray(64);
   const mk = await subtle.importKey('raw', KEY.subarray(32), { name: 'HMAC', hash: 'SHA-256' }, false, ['verify']);
