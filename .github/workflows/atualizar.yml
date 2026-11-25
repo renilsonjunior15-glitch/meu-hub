@@ -5,6 +5,10 @@ on:
     # Todo dia às 08:30 de Brasília (11:30 UTC), antes da abertura da B3 (10:00).
     - cron: '30 11 * * *'
   workflow_dispatch: {}
+  # Também roda quando a carteira ou o próprio robô mudam
+  push:
+    branches: [main]
+    paths: ['apps/carteira.bin', 'robo/**', '.github/workflows/atualizar.yml']
 
 permissions:
   contents: write
