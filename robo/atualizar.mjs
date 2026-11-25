@@ -140,9 +140,16 @@ async function openFinance() {
     try {
       const it = await getJSON(`${BASE}/items/${itemId}`, H, 2);
       banco = (it.connector && it.connector.name) || banco;
+      const contas = (await getJSON(`${BASE}/accounts?itemId=${itemId}`, H, 2)).results || [];
+      // Conexões via MeuPluggy: o nome real do banco vem das contas
+      if (/meu ?pluggy/i.test(banco)) {
+        const nomes = contas.map((c) => `${c.name || ''} ${c.marketingName || ''}`).join(' ');
+        const conhecidos = [[/\bnu\b|nubank|nu pagamentos/i, 'Nubank'], [/santander/i, 'Santander'], [/ita[uú]/i, 'Itaú'], [/bradesco/i, 'Bradesco'], [/banco do brasil|\bbb\b/i, 'Banco do Brasil'], [/caixa/i, 'Caixa'], [/inter\b/i, 'Inter'], [/c6/i, 'C6 Bank'], [/picpay/i, 'PicPay'], [/mercado ?pago/i, 'Mercado Pago'], [/xp\b/i, 'XP'], [/btg/i, 'BTG']];
+        const achado = conhecidos.find(([re]) => re.test(nomes));
+        banco = achado ? achado[1] : ((contas[0] && (contas[0].name || '').split(/[-–(]/)[0].trim()) || banco);
+      }
       out.bancos.push({ banco, status: it.status, execucao: it.executionStatus, atualizado_em: it.lastUpdatedAt || it.updatedAt || null });
       if (it.status && !['UPDATED', 'UPDATING'].includes(it.status)) avisos.push(`Open Finance: ${banco} está "${it.status}". Pode ser preciso renovar a autorização no Meu Pluggy.`);
-      const contas = (await getJSON(`${BASE}/accounts?itemId=${itemId}`, H, 2)).results || [];
       for (const c of contas) {
         const cartao = c.type === 'CREDIT';
         out.contas.push({
