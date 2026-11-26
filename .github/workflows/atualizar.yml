@@ -4,6 +4,11 @@ on:
   schedule:
     # Todo dia às 08:30 de Brasília (11:30 UTC), antes da abertura da B3 (10:00).
     - cron: '30 11 * * *'
+    # O agendador do GitHub às vezes pula execuções: estes horários extras garantem a atualização do dia
+    # (10:47, 13:17 e 19:43 de Brasília; minutos "quebrados" fogem do horário de pico do GitHub)
+    - cron: '47 13 * * *'
+    - cron: '17 16 * * *'
+    - cron: '43 22 * * *'
   workflow_dispatch: {}
   # Também roda quando a carteira ou o próprio robô mudam
   push:
