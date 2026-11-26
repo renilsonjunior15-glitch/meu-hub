@@ -1,5 +1,5 @@
 // Guarda o hub e os apps no aparelho para funcionar sem internet.
-const CACHE = 'meu-hub-20261125154748';
+const CACHE = 'meu-hub-20261126144403';
 const FONTS = 'meu-hub-fonts';
 const ASSETS = ['./', './manifest.webmanifest', './icons/icon-180.png', './icons/icon-192.png', './icons/icon-512.png', './icons/icon-maskable-512.png',
   './apps/check.bin', './apps/treino.bin', './apps/alimentacao.bin', './apps/compra-pc.bin', './apps/compra-mobile.bin', './apps/financas.bin', './apps/dados.bin'];
